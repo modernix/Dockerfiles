@@ -1,0 +1,31 @@
+FROM modernix/preucd:1.0
+MAINTAINER modernix "ben.btran@gmail.com"
+ENV REFRESHED_AT ?
+
+ENV KITEMATIC_IP 192.168.99.100
+ENV UCD_IMAGE ?
+
+ADD IBM_UDEPLOY*.zip /tmp/
+ENV JAVA_HOME /etc/alternatives/jre_1.7.0
+
+WORKDIR /tmp/
+RUN unzip $UCD_IMAGE
+
+VOLUME  /opt/ibm-ucd/server/patches
+
+WORKDIR /tmp/?
+RUN echo -e "\nnonInteractive=true\ninstall.server.dir=/opt/ibm-ucd/server\ninstall.java.home=$JAVA_HOME\ninstall.server.web.always.secure=Y\ninstall.server.web.host=$KITEMATIC_IP\ninstall.server.web.https.port=8443\ninstall.server.web.ip=0.0.0.0\ninstall.server.web.port=8080\ndatabase.type=derby\nhibernate.connection.username=ibm_ucd\nhibernate.connection.password=password\nhibernate.connection.url=jdbc\:derby\://localhost\:11377/data\nrcl.server.url=27000@<your_license_server>\nserver.initial.password=admin\nserver.jms.mutualAuth=false\nserver.jms.port=7918\nserver.keystore.password=changeit\nskip.db.install=N" >> install.properties
+
+RUN sed -i "/chmod*/a sleep 1" install-server.sh
+RUN ["chmod", "755", "./install-server.sh"]
+RUN ["./install-server.sh"]
+
+WORKDIR /root
+
+#Romove UCD files
+RUN rm -rf /tmp/udeploy-install /tmp/$UCD_IMAGE
+RUN yum clean all
+
+EXPOSE 7918 8443 8080
+
+CMD ["/opt/ibm-ucd/server/bin/server","run"]
