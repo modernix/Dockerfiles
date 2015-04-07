@@ -1,0 +1,17 @@
+FROM centos:latest
+MAINTAINER modernix "ben.btran@gmail.com"
+ENV REFRESHED_AT 2015-04-07
+
+RUN yum update && yum install zip -y
+
+ENV KITEMATIC_IP 192.168.99.100
+ENV IM_IMAGE agent.installer.linux.gtk.x86_64*.zip
+
+ADD $IM_IMAGE /tmp/
+ADD rlk_install.xml /tmp
+WORKDIR /tmp
+RUN unzip $IM_IMAGE -d /tmp/IM
+RUN /tmp/IBM/installc -dataLocation /opt/IBM/IM -acceptLicense
+
+RUN /opt/IBM/IM/eclipse/tools/imcl -silent -input /tmp/rlk_install.xml -acceptLicense
+
